@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voitures IA - Algorithme Génétique</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Voitures IA - Apprentissage par Algorithme Génétique</h1>
+
+        <div class="main-layout">
+            <div class="game-container">
+                <canvas id="gameCanvas" width="1150" height="680"></canvas>
+            </div>
+
+            <div class="sidebar">
+                <div class="panel stats-panel">
+                    <h3>Statistiques Globales</h3>
+                    <div class="stat-row">
+                        <span class="label">Génération:</span>
+                        <span id="generation" class="value">1</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Voitures vivantes:</span>
+                        <span id="alive" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Meilleur fitness:</span>
+                        <span id="bestFitness" class="value highlight">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Tours max (all-time):</span>
+                        <span id="bestLaps" class="value highlight">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Meilleur temps/tour:</span>
+                        <span id="bestLapTime" class="value highlight">--</span>
+                    </div>
+                </div>
+
+                <div class="panel best-car-panel">
+                    <h3>Meilleure Voiture (en vie)</h3>
+                    <div class="stat-row">
+                        <span class="label">Tours:</span>
+                        <span id="currentLaps" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Checkpoints:</span>
+                        <span id="currentCheckpoints" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Vitesse actuelle:</span>
+                        <span id="currentSpeed" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Vitesse moyenne:</span>
+                        <span id="avgSpeed" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Vitesse max:</span>
+                        <span id="maxSpeed" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Distance totale:</span>
+                        <span id="totalDistance" class="value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Efficacité:</span>
+                        <span id="efficiency" class="value">0%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Fitness:</span>
+                        <span id="currentFitness" class="value">0</span>
+                    </div>
+                </div>
+
+                <div class="panel controls-panel">
+                    <h3>Contrôles</h3>
+                    <div class="buttons">
+                        <button id="startBtn">Démarrer</button>
+                        <button id="resetBtn">Reset</button>
+                    </div>
+                    <div class="buttons">
+                        <button id="speedBtn">Vitesse: 1x</button>
+                    </div>
+
+                    <div class="setting">
+                        <label>Voitures: <span id="carCountValue">50</span></label>
+                        <input type="range" id="carCount" value="50" min="20" max="150">
+                    </div>
+                    <div class="setting">
+                        <label>Mutation: <span id="mutationValue">15%</span></label>
+                        <input type="range" id="mutationRate" min="1" max="50" value="15">
+                    </div>
+                </div>
+
+                <div class="panel save-panel">
+                    <h3>Sauvegarde</h3>
+                    <div class="buttons">
+                        <button id="saveBtn">Sauvegarder</button>
+                        <button id="loadBtn">Charger</button>
+                    </div>
+                    <input type="file" id="loadFile" accept=".json" style="display:none">
+                    <p id="saveStatus" class="save-status"></p>
+                </div>
+
+                <div class="panel info-panel">
+                    <h3>Raccourcis</h3>
+                    <p><kbd>ESPACE</kbd> Pause/Play</p>
+                    <p><kbd>S</kbd> Afficher capteurs</p>
+                    <p><kbd>+/-</kbd> Vitesse</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="neuralNetwork.js"></script>
+    <script src="car.js"></script>
+    <script src="track.js"></script>
+    <script src="geneticAlgorithm.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
