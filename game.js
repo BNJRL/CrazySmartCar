@@ -99,7 +99,7 @@ class Game {
         this.resetBtn.addEventListener('click', () => this.reset());
 
         this.speedBtn.addEventListener('click', () => {
-            const speeds = [1, 2, 5, 10, 20, 30];
+            const speeds = [1, 2, 5, 10, 15];
             const currentIndex = speeds.indexOf(this.speed);
             this.speed = speeds[(currentIndex + 1) % speeds.length];
             this.speedBtn.textContent = `Speed: ${this.speed}x`;
@@ -121,7 +121,7 @@ class Game {
                     this.speedBtn.click();
                     break;
                 case '-':
-                    const speeds = [1, 2, 5, 10, 20, 30];
+                    const speeds = [1, 2, 5, 10, 15];
                     const idx = speeds.indexOf(this.speed);
                     this.speed = speeds[Math.max(0, idx - 1)];
                     this.speedBtn.textContent = `Speed: ${this.speed}x`;
