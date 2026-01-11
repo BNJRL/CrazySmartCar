@@ -1,6 +1,6 @@
 /**
- * Réseau de neurones simple pour contrôler les voitures
- * Architecture: entrées -> couche cachée -> sorties
+ * Simple neural network to control cars
+ * Architecture: inputs -> hidden layer -> outputs
  */
 class NeuralNetwork {
     constructor(inputSize, hiddenSize, outputSize) {
@@ -8,11 +8,11 @@ class NeuralNetwork {
         this.hiddenSize = hiddenSize;
         this.outputSize = outputSize;
 
-        // Initialisation des poids avec des valeurs aléatoires entre -1 et 1
+        // Initialize weights with random values between -1 and 1
         this.weightsInputHidden = this.createMatrix(hiddenSize, inputSize);
         this.weightsHiddenOutput = this.createMatrix(outputSize, hiddenSize);
 
-        // Biais
+        // Biases
         this.biasHidden = this.createArray(hiddenSize);
         this.biasOutput = this.createArray(outputSize);
 
@@ -20,7 +20,7 @@ class NeuralNetwork {
     }
 
     /**
-     * Crée une matrice de dimensions rows x cols
+     * Create a matrix of dimensions rows x cols
      */
     createMatrix(rows, cols) {
         const matrix = [];
@@ -31,14 +31,14 @@ class NeuralNetwork {
     }
 
     /**
-     * Crée un tableau de taille donnée
+     * Create an array of given size
      */
     createArray(size) {
         return new Array(size).fill(0);
     }
 
     /**
-     * Initialise les poids et biais avec des valeurs aléatoires
+     * Initialize weights and biases with random values
      */
     randomize() {
         for (let i = 0; i < this.hiddenSize; i++) {
@@ -57,17 +57,17 @@ class NeuralNetwork {
     }
 
     /**
-     * Fonction d'activation: tanh (retourne une valeur entre -1 et 1)
+     * Activation function: sigmoid (returns value between 0 and 1)
      */
     activate(x) {
-        return Math.tanh(x);
+        return 1 / (1 + Math.exp(-x));
     }
 
     /**
-     * Propagation avant: calcule les sorties à partir des entrées
+     * Forward propagation: compute outputs from inputs
      */
     predict(inputs) {
-        // Couche cachée
+        // Hidden layer
         const hidden = [];
         for (let i = 0; i < this.hiddenSize; i++) {
             let sum = this.biasHidden[i];
@@ -77,7 +77,7 @@ class NeuralNetwork {
             hidden[i] = this.activate(sum);
         }
 
-        // Couche de sortie
+        // Output layer
         const outputs = [];
         for (let i = 0; i < this.outputSize; i++) {
             let sum = this.biasOutput[i];
@@ -91,7 +91,7 @@ class NeuralNetwork {
     }
 
     /**
-     * Crée une copie du réseau de neurones
+     * Create a copy of the neural network
      */
     clone() {
         const clone = new NeuralNetwork(this.inputSize, this.hiddenSize, this.outputSize);
@@ -114,13 +114,13 @@ class NeuralNetwork {
     }
 
     /**
-     * Applique une mutation aléatoire aux poids du réseau
-     * @param {number} rate - Probabilité de mutation (0 à 1)
+     * Apply random mutation to network weights
+     * @param {number} rate - Mutation probability (0 to 1)
      */
     mutate(rate) {
         const mutateValue = (value) => {
             if (Math.random() < rate) {
-                // Mutation gaussienne
+                // Gaussian mutation
                 return value + (Math.random() * 2 - 1) * 0.5;
             }
             return value;
@@ -142,7 +142,7 @@ class NeuralNetwork {
     }
 
     /**
-     * Croisement entre deux réseaux de neurones
+     * Crossover between two neural networks
      */
     static crossover(parent1, parent2) {
         const child = new NeuralNetwork(parent1.inputSize, parent1.hiddenSize, parent1.outputSize);
@@ -173,7 +173,7 @@ class NeuralNetwork {
     }
 
     /**
-     * Exporte le réseau en JSON
+     * Export network to JSON
      */
     toJSON() {
         return {
@@ -188,7 +188,7 @@ class NeuralNetwork {
     }
 
     /**
-     * Crée un réseau à partir de données JSON
+     * Create network from JSON data
      */
     static fromJSON(data) {
         const nn = new NeuralNetwork(data.inputSize, data.hiddenSize, data.outputSize);

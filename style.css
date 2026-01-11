@@ -12,30 +12,31 @@ body {
 }
 
 .container {
-    max-width: 1600px;
+    max-width: 1900px;
     margin: 0 auto;
-    padding: 15px;
+    padding: 10px;
 }
 
 h1 {
     text-align: center;
-    margin-bottom: 15px;
-    font-size: 1.6rem;
+    margin-bottom: 10px;
+    font-size: 1.4rem;
     color: #4ecca3;
     text-shadow: 0 0 20px rgba(78, 204, 163, 0.3);
 }
 
 .main-layout {
     display: flex;
-    gap: 15px;
+    gap: 10px;
 }
 
 .game-container {
-    flex: 1;
+    flex: 0 0 auto;
     background: #0a0a15;
     border-radius: 10px;
-    padding: 10px;
+    padding: 8px;
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
 }
 
 #gameCanvas {
@@ -45,25 +46,27 @@ h1 {
     border: 2px solid #333;
 }
 
+/* Sidebar gauche - Stats et contrôles */
 .sidebar {
-    width: 280px;
+    width: 220px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .panel {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: 8px;
+    padding: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .panel h3 {
     color: #4ecca3;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
     border-bottom: 1px solid rgba(78, 204, 163, 0.3);
 }
 
@@ -71,8 +74,8 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 0;
-    font-size: 0.85rem;
+    padding: 3px 0;
+    font-size: 0.8rem;
 }
 
 .stat-row .label {
@@ -87,24 +90,26 @@ h1 {
 
 .stat-row .value.highlight {
     color: #4ecca3;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .buttons {
     display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 5px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
 button {
     flex: 1;
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    padding: 8px 6px;
+    font-size: 0.75rem;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: bold;
+    min-width: 60px;
 }
 
 #startBtn {
@@ -114,7 +119,6 @@ button {
 
 #startBtn:hover {
     background: #3db892;
-    transform: translateY(-1px);
 }
 
 #resetBtn {
@@ -135,14 +139,98 @@ button {
     background: #2980b9;
 }
 
+#saveBtn, #saveTrackBtn {
+    background: #9b59b6;
+    color: white;
+}
+
+#loadBtn, #loadTrackBtn {
+    background: #1abc9c;
+    color: white;
+}
+
+.save-status {
+    font-size: 0.7rem;
+    margin-top: 5px;
+    text-align: center;
+    min-height: 1em;
+}
+
+.save-status.success {
+    color: #4ecca3;
+}
+
+.save-status.error {
+    color: #e74c3c;
+}
+
+/* Panneau de configuration IA */
+.config-panel {
+    width: 320px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.config-panel h2 {
+    color: #4ecca3;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(78, 204, 163, 0.3);
+}
+
+.config-section {
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.section-header {
+    background: rgba(78, 204, 163, 0.1);
+    padding: 8px 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #4ecca3;
+    transition: background 0.2s;
+}
+
+.section-header:hover {
+    background: rgba(78, 204, 163, 0.2);
+}
+
+.toggle-icon {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.section-content {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
 .setting {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.setting:last-child {
+    margin-bottom: 0;
 }
 
 .setting label {
     display: block;
-    font-size: 0.8rem;
-    color: #888;
+    font-size: 0.75rem;
+    color: #ccc;
     margin-bottom: 4px;
 }
 
@@ -158,63 +246,137 @@ button {
     background: #2a2a4a;
     outline: none;
     -webkit-appearance: none;
+    margin-top: 2px;
 }
 
 .setting input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: #4ecca3;
     cursor: pointer;
+    transition: transform 0.1s;
 }
 
-.info-panel p {
-    font-size: 0.8rem;
-    color: #888;
-    margin-bottom: 5px;
+.setting input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
 }
 
-kbd {
-    background: #2a2a4a;
-    padding: 2px 6px;
+.setting-info {
+    font-size: 0.65rem;
+    color: #666;
+    margin-top: 3px;
+    font-style: italic;
+}
+
+.toggle-setting label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.toggle-setting input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4ecca3;
+    cursor: pointer;
+}
+
+.apply-section {
+    margin-top: 15px;
+    display: flex;
+    gap: 8px;
+}
+
+.apply-btn {
+    flex: 2;
+    background: linear-gradient(135deg, #4ecca3, #3db892);
+    color: #0a0a15;
+    padding: 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.apply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(78, 204, 163, 0.4);
+}
+
+.reset-config-btn {
+    flex: 1;
+    background: #555;
+    color: white;
+    padding: 12px 8px;
+    font-size: 0.75rem;
+}
+
+.reset-config-btn:hover {
+    background: #666;
+}
+
+/* Mode dessin */
+.draw-mode {
+    cursor: crosshair;
+}
+
+.set-start-mode {
+    cursor: crosshair;
+}
+
+#drawModeIndicator {
+    font-size: 0.85rem;
+}
+
+#drawTrackBtn {
+    background: #f39c12;
+    color: #0a0a15;
+}
+
+#drawTrackBtn:hover {
+    background: #e67e22;
+}
+
+#setStartBtn {
+    background: #27ae60;
+    color: white;
+}
+
+#setStartBtn:hover {
+    background: #229954;
+}
+
+#clearDrawBtn {
+    background: #e74c3c;
+    color: white;
+}
+
+#clearDrawBtn:hover {
+    background: #c0392b;
+}
+
+/* Scrollbar personnalisée pour le panneau config */
+.config-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.config-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 3px;
-    font-size: 0.75rem;
-    color: #4ecca3;
-    border: 1px solid #3a3a5a;
 }
 
-#saveBtn {
-    background: #9b59b6;
-    color: white;
+.config-panel::-webkit-scrollbar-thumb {
+    background: rgba(78, 204, 163, 0.5);
+    border-radius: 3px;
 }
 
-#saveBtn:hover {
-    background: #8e44ad;
-}
-
-#loadBtn {
-    background: #1abc9c;
-    color: white;
-}
-
-#loadBtn:hover {
-    background: #16a085;
-}
-
-.save-status {
-    font-size: 0.75rem;
-    margin-top: 8px;
-    text-align: center;
-    min-height: 1.2em;
-}
-
-.save-status.success {
-    color: #4ecca3;
-}
-
-.save-status.error {
-    color: #e74c3c;
+.config-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(78, 204, 163, 0.7);
 }
 
 /* Animations */
@@ -227,8 +389,136 @@ kbd {
     animation: pulse 2s infinite;
 }
 
+/* Indicateur de changement non appliqué */
+.config-panel.has-changes .apply-btn {
+    animation: pulse 1s infinite;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+/* Track Selection Bar */
+.track-selection-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.track-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.track-btn {
+    padding: 10px 25px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: 2px solid #4ecca3;
+    background: transparent;
+    color: #4ecca3;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.track-btn:hover:not(.locked):not(.active) {
+    background: rgba(78, 204, 163, 0.2);
+}
+
+.track-btn.active {
+    background: #4ecca3;
+    color: #0a0a15;
+}
+
+.track-btn.locked {
+    border-color: #555;
+    color: #555;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.track-btn.unlocked {
+    border-color: #4ecca3;
+    color: #4ecca3;
+    cursor: pointer;
+    opacity: 1;
+}
+
+.next-track-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.call-teacher-text {
+    color: #f39c12;
+    font-weight: bold;
+    font-size: 0.9rem;
+    animation: pulse-text 1.5s infinite;
+}
+
+@keyframes pulse-text {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.next-track-btn {
+    padding: 12px 30px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.next-track-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+}
+
+.next-track-btn:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.next-track-btn.ready {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    animation: pulse-button 1.5s infinite;
+}
+
+@keyframes pulse-button {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+}
+
 /* Responsive */
-@media (max-width: 1400px) {
+@media (max-width: 1600px) {
+    .main-layout {
+        flex-wrap: wrap;
+    }
+
+    .config-panel {
+        width: 100%;
+        max-height: none;
+        order: 3;
+    }
+
+    .sidebar {
+        width: 200px;
+    }
+}
+
+@media (max-width: 1200px) {
     .main-layout {
         flex-direction: column;
     }
@@ -241,6 +531,10 @@ kbd {
 
     .panel {
         flex: 1;
-        min-width: 200px;
+        min-width: 180px;
+    }
+
+    .config-panel {
+        width: 100%;
     }
 }

@@ -1,9 +1,10 @@
 /**
- * Classe représentant une voiture avec ses capteurs et son réseau de neurones
+ * Class representing a car with its sensors and neural network
+ * Uses Config parameters for physics and fitness
  */
 class Car {
     constructor(x, y, angle, brain = null) {
-        // Position et orientation
+        // Position and orientation
         this.x = x;
         this.y = y;
         this.angle = angle;
@@ -11,71 +12,95 @@ class Car {
         this.startY = y;
         this.startAngle = angle;
 
-        // Physique
+        // Physics (from Config)
         this.speed = 0;
-        this.maxSpeed = 6;
-        this.acceleration = 0.25;
-        this.friction = 0.05;
-        this.turnSpeed = 0.06;
+        this.maxSpeed = Config.physics.maxSpeed;
+        this.acceleration = Config.physics.acceleration;
+        this.friction = Config.physics.friction;
+        this.turnSpeed = Config.physics.turnSpeed;
 
-        // Dimensions de la voiture
-        this.width = 25;
-        this.height = 12;
+        // Car dimensions
+        this.width = 16;
+        this.height = 8;
 
-        // État
+        // State
         this.alive = true;
         this.fitness = 0;
-        this.totalDistance = 0;  // Distance totale parcourue
-        this.lapDistance = 0;    // Distance pour le tour actuel
+        this.totalDistance = 0;
+        this.lapDistance = 0;
         this.checkpointIndex = 0;
-        this.checkpointsPassed = 0; // Total checkpoints passés (tous tours confondus)
-        this.laps = 0;           // Nombre de tours complétés
-        this.lapTimes = [];      // Temps par tour
-        this.currentLapTime = 0; // Temps du tour en cours
+        this.checkpointsPassed = 0;
+        this.laps = 0;
+        this.lapTimes = [];
+        this.currentLapTime = 0;
         this.bestLapTime = Infinity;
         this.frameCount = 0;
-        this.stuckCounter = 0;   // Compteur pour détecter si bloqué
+        this.stuckCounter = 0;
         this.lastX = x;
         this.lastY = y;
-        this.finishedLap = false;  // A terminé un tour
+        this.finishedLap = false;
 
-        // Stats pour le fitness
+        // Stats for fitness
         this.avgSpeed = 0;
         this.maxSpeedReached = 0;
         this.totalSpeed = 0;
         this.speedSamples = 0;
-        this.maxDistFromStart = 0; // Distance max depuis le départ
+        this.maxDistFromStart = 0;
+        this.distanceToNextCheckpoint = Infinity;
+        this.minDistanceToNextCheckpoint = Infinity;
+        this.efficientDistance = 0;
 
-        // Capteurs (7 rayons pour plus de précision)
-        this.sensorCount = 7;
-        this.sensorLength = 120;
-        this.sensorAngles = [
-            -Math.PI / 2,      // Gauche 90°
-            -Math.PI / 3,      // Gauche 60°
-            -Math.PI / 6,      // Gauche 30°
-            0,                  // Devant
-            Math.PI / 6,       // Droite 30°
-            Math.PI / 3,       // Droite 60°
-            Math.PI / 2        // Droite 90°
-        ];
+        // Visited zones (for exploration)
+        this.visitedZones = new Set();
+        this.zoneSize = 50; // Zone size in pixels
+
+        // Sensors (from Config)
+        this.sensorCount = Config.network.sensorCount;
+        this.sensorLength = Config.network.sensorRange;
+        this.sensorAngles = this.generateSensorAngles(this.sensorCount);
         this.sensorReadings = new Array(this.sensorCount).fill(1);
 
-        // Réseau de neurones
-        // Entrées: 7 capteurs + vitesse + angle de braquage = 9 entrées
-        // Sorties: accélérer, freiner, tourner gauche, tourner droite = 4 sorties
+        // Neural network
+        const inputSize = this.sensorCount + 3; // sensors + speed + direction (x, y)
+        const hiddenSize = Config.network.hiddenSize;
+        const outputSize = 4; // accelerate, brake, left, right
+
         if (brain) {
             this.brain = brain;
         } else {
-            this.brain = new NeuralNetwork(9, 12, 4);
+            this.brain = new NeuralNetwork(inputSize, hiddenSize, outputSize);
         }
 
-        // Couleur
+        // Direction to next checkpoint
+        this.checkpointDirX = 0;
+        this.checkpointDirY = 0;
+
+        // Additional scores
+        this.novelty = 0;
+        this.sharedFitness = 0;
+        this.combinedScore = 0;
+
+        // Color
         this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
         this.isBest = false;
     }
 
     /**
-     * Réinitialise la voiture à sa position de départ
+     * Generate uniformly distributed sensor angles
+     */
+    generateSensorAngles(count) {
+        const angles = [];
+        const spread = Math.PI; // 180 degrees coverage
+        const step = spread / (count - 1);
+
+        for (let i = 0; i < count; i++) {
+            angles.push(-spread / 2 + i * step);
+        }
+        return angles;
+    }
+
+    /**
+     * Reset car to starting position
      */
     reset() {
         this.x = this.startX;
@@ -102,11 +127,29 @@ class Car {
         this.totalSpeed = 0;
         this.speedSamples = 0;
         this.maxDistFromStart = 0;
+        this.distanceToNextCheckpoint = Infinity;
+        this.minDistanceToNextCheckpoint = Infinity;
+        this.efficientDistance = 0;
+        this.checkpointDirX = 0;
+        this.checkpointDirY = 0;
         this.sensorReadings = new Array(this.sensorCount).fill(1);
+        this.visitedZones.clear();
+        this.novelty = 0;
+        this.sharedFitness = 0;
+        this.combinedScore = 0;
     }
 
     /**
-     * Met à jour les capteurs en fonction des murs du circuit
+     * Record visited zone (for exploration)
+     */
+    recordZone() {
+        const zoneX = Math.floor(this.x / this.zoneSize);
+        const zoneY = Math.floor(this.y / this.zoneSize);
+        this.visitedZones.add(`${zoneX},${zoneY}`);
+    }
+
+    /**
+     * Update sensors based on track walls
      */
     updateSensors(walls) {
         for (let i = 0; i < this.sensorCount; i++) {
@@ -139,7 +182,7 @@ class Car {
     }
 
     /**
-     * Calcule l'intersection entre deux segments de ligne
+     * Calculate intersection between two line segments
      */
     getLineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
         const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
@@ -158,7 +201,7 @@ class Car {
     }
 
     /**
-     * Vérifie si la voiture est en collision avec les murs
+     * Check if car collides with walls
      */
     checkCollision(walls) {
         const corners = this.getCorners();
@@ -179,7 +222,7 @@ class Car {
     }
 
     /**
-     * Récupère les coins de la voiture
+     * Get car corners
      */
     getCorners() {
         const cos = Math.cos(this.angle);
@@ -196,13 +239,35 @@ class Car {
     }
 
     /**
-     * Vérifie si la voiture a passé un checkpoint dans le BON SENS
-     * Le checkpoint 0 (ligne d'arrivée) ne donne PAS de récompense directe
-     * Seuls les checkpoints 1-9 donnent des récompenses
+     * Update direction to next checkpoint
+     */
+    updateCheckpointDirection(checkpoints) {
+        if (checkpoints.length === 0) return;
+
+        const cp = checkpoints[this.checkpointIndex % checkpoints.length];
+
+        const dx = cp.midX - this.x;
+        const dy = cp.midY - this.y;
+        this.distanceToNextCheckpoint = Math.sqrt(dx * dx + dy * dy);
+
+        const angleToCheckpoint = Math.atan2(dy, dx);
+        const relativeAngle = angleToCheckpoint - this.angle;
+        this.checkpointDirX = Math.cos(relativeAngle);
+        this.checkpointDirY = Math.sin(relativeAngle);
+
+        if (this.distanceToNextCheckpoint < this.minDistanceToNextCheckpoint) {
+            this.minDistanceToNextCheckpoint = this.distanceToNextCheckpoint;
+        }
+    }
+
+    /**
+     * Check if car passed a checkpoint in the RIGHT DIRECTION
      */
     checkCheckpoints(checkpoints) {
+        if (checkpoints.length === 0) return false;
+
         const totalCheckpoints = checkpoints.length;
-        const cp = checkpoints[this.checkpointIndex];
+        const cp = checkpoints[this.checkpointIndex % totalCheckpoints];
         const corners = this.getCorners();
 
         for (let i = 0; i < corners.length; i++) {
@@ -212,19 +277,18 @@ class Car {
                 corners[next].x, corners[next].y,
                 cp.x1, cp.y1, cp.x2, cp.y2
             )) {
-                // Vérifier que la voiture va dans le bon sens
                 const carDirX = Math.cos(this.angle);
                 const carDirY = Math.sin(this.angle);
                 const dotProduct = carDirX * cp.dirX + carDirY * cp.dirY;
 
                 if (dotProduct > 0.1) {
-                    // Compteur de checkpoints passés (pour le fitness)
                     this.checkpointsPassed++;
-                    this.stuckCounter = 0; // Reset du compteur bloqué
+                    this.stuckCounter = 0;
+                    this.efficientDistance += this.lapDistance;
 
                     this.checkpointIndex++;
+                    this.minDistanceToNextCheckpoint = Infinity;
 
-                    // Tour complété (après avoir passé tous les checkpoints 1-9 puis le 0)
                     if (this.checkpointIndex >= totalCheckpoints) {
                         this.checkpointIndex = 0;
                         this.laps++;
@@ -237,8 +301,6 @@ class Car {
                         }
                         this.currentLapTime = 0;
                         this.lapDistance = 0;
-
-                        // MORT après avoir complété un tour (objectif atteint)
                         this.finishedLap = true;
                     }
 
@@ -251,40 +313,49 @@ class Car {
     }
 
     /**
-     * Calcule le fitness de la voiture
-     * Basé sur: tours complétés + temps de tour + checkpoints + vitesse
-     * PÉNALITÉ si la voiture est arrêtée
+     * Calculate car fitness (uses Config.fitness)
      */
     calculateFitness() {
-        // PRIORITÉ 1: Tours complétés (énorme bonus)
-        const lapScore = this.laps * 50000;
+        const f = Config.fitness;
 
-        // PRIORITÉ 2: Bonus pour temps de tour rapide (si tour complété)
-        let lapTimeBonus = 0;
-        if (this.bestLapTime < Infinity) {
-            // Plus le temps est court, plus le bonus est grand
-            // Temps de référence: 1000 frames = temps "normal"
-            lapTimeBonus = Math.max(0, (2000 - this.bestLapTime)) * 10;
+        // Completed laps
+        const lapScore = this.laps * f.lapBonus;
+
+        // Passed checkpoints
+        const checkpointScore = this.checkpointsPassed * f.checkpointWeight;
+
+        // Progress towards next checkpoint
+        let approachScore = 0;
+        if (this.minDistanceToNextCheckpoint < Infinity && this.minDistanceToNextCheckpoint > 0) {
+            approachScore = f.approachWeight / (1 + this.minDistanceToNextCheckpoint / 50);
         }
 
-        // PRIORITÉ 3: Nombre de checkpoints passés (encourage la progression)
-        const checkpointScore = this.checkpointsPassed * 1000;
+        // Direction bonus (facing checkpoint)
+        const directionScore = Math.max(0, this.checkpointDirX) * 200;
 
-        // SECONDAIRE: Distance max depuis le départ (évite les voitures qui tournent en rond)
-        const distanceScore = this.maxDistFromStart * 2;
+        // Total distance
+        const distanceScore = this.totalDistance * 0.3;
 
-        // BONUS: Vitesse moyenne (encourage à aller vite)
-        const speedScore = this.avgSpeed * 100;
+        // Average speed
+        const speedScore = this.avgSpeed * f.speedWeight;
 
-        // PÉNALITÉ: Temps passé à l'arrêt (décourage l'immobilité)
-        const stuckPenalty = this.stuckCounter * 50;
+        // Exploration (unique zones visited)
+        const explorationScore = this.visitedZones.size * f.explorationWeight;
 
-        this.fitness = lapScore + lapTimeBonus + checkpointScore + distanceScore + speedScore - stuckPenalty;
+        // Stuck penalty
+        const stuckPenalty = this.stuckCounter * f.stuckPenalty;
+
+        // Wrong way penalty (back to checkpoint)
+        const wrongWayPenalty = this.checkpointDirX < -0.3 ? f.wrongWayPenalty * Math.abs(this.checkpointDirX) : 0;
+
+        this.fitness = lapScore + checkpointScore + approachScore + directionScore +
+            distanceScore + speedScore + explorationScore - stuckPenalty - wrongWayPenalty;
+
         return this.fitness;
     }
 
     /**
-     * Met à jour la voiture (appelé à chaque frame)
+     * Update car (called every frame)
      */
     update(walls, checkpoints) {
         if (!this.alive) return;
@@ -292,40 +363,55 @@ class Car {
         this.frameCount++;
         this.currentLapTime++;
 
-        // Mettre à jour les capteurs
+        // Update physics from Config
+        this.maxSpeed = Config.physics.maxSpeed;
+        this.acceleration = Config.physics.acceleration;
+        this.friction = Config.physics.friction;
+
+        // Update sensors
         this.updateSensors(walls);
 
-        // Obtenir les décisions du réseau de neurones
+        // Update direction to checkpoint
+        this.updateCheckpointDirection(checkpoints);
+
+        // Get neural network decisions
         const normalizedSpeed = this.speed / this.maxSpeed;
-        const inputs = [...this.sensorReadings, normalizedSpeed, Math.sin(this.angle)];
+        const inputs = [
+            ...this.sensorReadings,
+            normalizedSpeed,
+            this.checkpointDirX,
+            this.checkpointDirY
+        ];
         const outputs = this.brain.predict(inputs);
 
-        // Interpréter les sorties
-        // Accélérer
-        if (outputs[0] > 0.5) {
-            this.speed += this.acceleration;
+        // Accelerate/Brake
+        const throttle = outputs[0] - outputs[1];
+        if (throttle > 0) {
+            this.speed += this.acceleration * throttle;
+        } else {
+            this.speed += this.acceleration * throttle * 0.5;
         }
-        // Freiner (mais pas de marche arrière)
-        if (outputs[1] > 0.5) {
-            this.speed -= this.acceleration * 0.8;
+
+        // Initial impulse
+        if (this.speed < 1 && this.frameCount < 60) {
+            this.speed = 1;
         }
-        // Tourner (seulement si on avance)
+
+        // Turn with speed reduction
+        const steering = outputs[3] - outputs[2];
         if (this.speed > 0.1) {
-            if (outputs[2] > 0.5) {
-                this.angle -= this.turnSpeed;
-            }
-            if (outputs[3] > 0.5) {
-                this.angle += this.turnSpeed;
-            }
+            const speedRatio = this.speed / this.maxSpeed;
+            const steeringFactor = 1 - speedRatio * Config.physics.turnReduction;
+            this.angle += this.turnSpeed * steering * 2 * steeringFactor;
         }
 
         // Friction
         this.speed *= (1 - this.friction);
 
-        // PAS de marche arrière - vitesse minimum = 0
+        // Limit speed
         this.speed = Math.max(0, Math.min(this.maxSpeed, this.speed));
 
-        // Stats de vitesse (seulement si on avance)
+        // Speed stats
         if (this.speed > 0) {
             this.totalSpeed += this.speed;
             this.speedSamples++;
@@ -335,18 +421,21 @@ class Car {
             }
         }
 
-        // Mettre à jour la position
+        // Update position
         const prevX = this.x;
         const prevY = this.y;
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
 
-        // Distance parcourue
+        // Distance traveled
         const dist = Math.sqrt(Math.pow(this.x - prevX, 2) + Math.pow(this.y - prevY, 2));
         this.totalDistance += dist;
         this.lapDistance += dist;
 
-        // Distance depuis le départ (pour le fitness)
+        // Record visited zone
+        this.recordZone();
+
+        // Distance from start
         const distFromStart = Math.sqrt(
             Math.pow(this.x - this.startX, 2) +
             Math.pow(this.y - this.startY, 2)
@@ -355,13 +444,13 @@ class Car {
             this.maxDistFromStart = distFromStart;
         }
 
-        // Détection de blocage : si la voiture n'a pas bougé significativement
-        if (this.frameCount % 30 === 0) { // Vérifier toutes les 30 frames
+        // Stuck detection
+        if (this.frameCount % 30 === 0) {
             const movement = Math.sqrt(
                 Math.pow(this.x - this.lastX, 2) +
                 Math.pow(this.y - this.lastY, 2)
             );
-            if (movement < 5) { // Moins de 5 pixels en 30 frames = bloqué
+            if (movement < 5) {
                 this.stuckCounter++;
             } else {
                 this.stuckCounter = Math.max(0, this.stuckCounter - 1);
@@ -370,37 +459,37 @@ class Car {
             this.lastY = this.y;
         }
 
-        // Vérifier les checkpoints
+        // Check checkpoints
         this.checkCheckpoints(checkpoints);
 
-        // Calculer le fitness
+        // Calculate fitness
         this.calculateFitness();
 
-        // MORT: Collision avec un mur
+        // Wall collision
         if (this.checkCollision(walls)) {
             this.alive = false;
         }
 
-        // MORT: Bloqué trop longtemps (10 vérifications = 300 frames = 5 secondes à 60fps)
+        // Stuck too long
         if (this.stuckCounter > 10) {
             this.alive = false;
         }
 
-        // MORT: A terminé un tour (objectif atteint, on passe à la suite)
+        // Lap finished
         if (this.finishedLap) {
             this.alive = false;
         }
     }
 
     /**
-     * Dessine la voiture sur le canvas
+     * Draw car on canvas
      */
     draw(ctx, showSensors = false) {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
 
-        // Corps de la voiture
+        // Car body
         if (this.alive) {
             ctx.fillStyle = this.isBest ? '#FFD700' : this.color;
             ctx.globalAlpha = this.isBest ? 1 : 0.6;
@@ -409,7 +498,7 @@ class Car {
             ctx.globalAlpha = 0.2;
         }
 
-        // Forme de voiture plus stylisée
+        // Car shape
         ctx.beginPath();
         ctx.moveTo(this.width / 2, 0);
         ctx.lineTo(this.width / 4, -this.height / 2);
@@ -419,7 +508,7 @@ class Car {
         ctx.closePath();
         ctx.fill();
 
-        // Indicateur avant
+        // Front indicator
         if (this.alive) {
             ctx.fillStyle = '#fff';
             ctx.globalAlpha = 0.8;
@@ -428,7 +517,7 @@ class Car {
 
         ctx.restore();
 
-        // Dessiner les capteurs
+        // Draw sensors
         if (showSensors && this.alive) {
             ctx.globalAlpha = 0.6;
             for (let i = 0; i < this.sensorCount; i++) {

@@ -1,125 +1,352 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voitures IA - Algorithme Génétique</title>
+    <title>AI Cars - Genetic Algorithm</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Voitures IA - Apprentissage par Algorithme Génétique</h1>
+        <h1>AI Cars - Learning with Genetic Algorithm</h1>
+
+        <!-- Track Selection Bar -->
+        <div class="track-selection-bar">
+            <div class="track-buttons">
+                <button id="track1Btn" class="track-btn active" data-track="1">Track 1</button>
+                <button id="track2Btn" class="track-btn locked" data-track="2" disabled>Track 2</button>
+                <button id="track3Btn" class="track-btn locked" data-track="3" disabled>Track 3</button>
+                <button id="track4Btn" class="track-btn locked" data-track="4" disabled>Track 4</button>
+            </div>
+            <div class="next-track-container">
+                <p id="callTeacherText" class="call-teacher-text" style="display:none;">Call the teacher!</p>
+                <button id="nextTrackBtn" class="next-track-btn" disabled>Next Track</button>
+            </div>
+        </div>
 
         <div class="main-layout">
             <div class="game-container">
                 <canvas id="gameCanvas" width="1150" height="680"></canvas>
+                <div id="drawModeIndicator" style="display:none; position:absolute; top:10px; right:10px; background:#4ecca3; color:#0a0a15; padding:5px 10px; border-radius:5px; font-weight:bold; max-width:250px;">
+                    Draw Mode: Drag to draw. Right-click: undo last point. Click "Finish Drawing" to validate.
+                </div>
             </div>
 
             <div class="sidebar">
+                <!-- Statistics -->
                 <div class="panel stats-panel">
-                    <h3>Statistiques Globales</h3>
+                    <h3>Global Statistics</h3>
                     <div class="stat-row">
-                        <span class="label">Génération:</span>
+                        <span class="label">Generation:</span>
                         <span id="generation" class="value">1</span>
                     </div>
                     <div class="stat-row">
-                        <span class="label">Voitures vivantes:</span>
+                        <span class="label">Cars alive:</span>
                         <span id="alive" class="value">0</span>
                     </div>
                     <div class="stat-row">
-                        <span class="label">Meilleur fitness:</span>
+                        <span class="label">Best fitness:</span>
                         <span id="bestFitness" class="value highlight">0</span>
                     </div>
                     <div class="stat-row">
-                        <span class="label">Tours max (all-time):</span>
+                        <span class="label">Max laps:</span>
                         <span id="bestLaps" class="value highlight">0</span>
                     </div>
                     <div class="stat-row">
-                        <span class="label">Meilleur temps/tour:</span>
+                        <span class="label">Best lap time:</span>
                         <span id="bestLapTime" class="value highlight">--</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Diversity:</span>
+                        <span id="diversity" class="value">0%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Stagnation:</span>
+                        <span id="stagnation" class="value">0</span>
                     </div>
                 </div>
 
+                <!-- Best car -->
                 <div class="panel best-car-panel">
-                    <h3>Meilleure Voiture (en vie)</h3>
-                    <div class="stat-row">
-                        <span class="label">Tours:</span>
-                        <span id="currentLaps" class="value">0</span>
-                    </div>
+                    <h3>Best Car</h3>
                     <div class="stat-row">
                         <span class="label">Checkpoints:</span>
                         <span id="currentCheckpoints" class="value">0</span>
                     </div>
                     <div class="stat-row">
-                        <span class="label">Vitesse actuelle:</span>
+                        <span class="label">Speed:</span>
                         <span id="currentSpeed" class="value">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="label">Vitesse moyenne:</span>
-                        <span id="avgSpeed" class="value">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="label">Vitesse max:</span>
-                        <span id="maxSpeed" class="value">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="label">Distance totale:</span>
-                        <span id="totalDistance" class="value">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="label">Efficacité:</span>
-                        <span id="efficiency" class="value">0%</span>
                     </div>
                     <div class="stat-row">
                         <span class="label">Fitness:</span>
                         <span id="currentFitness" class="value">0</span>
                     </div>
+                    <div class="stat-row">
+                        <span class="label">Novelty:</span>
+                        <span id="currentNovelty" class="value">0</span>
+                    </div>
                 </div>
 
+                <!-- Main controls -->
                 <div class="panel controls-panel">
-                    <h3>Contrôles</h3>
+                    <h3>Controls</h3>
                     <div class="buttons">
-                        <button id="startBtn">Démarrer</button>
+                        <button id="startBtn">Start</button>
                         <button id="resetBtn">Reset</button>
                     </div>
                     <div class="buttons">
-                        <button id="speedBtn">Vitesse: 1x</button>
+                        <button id="speedBtn">Speed: 1x</button>
                     </div>
-
-                    <div class="setting">
-                        <label>Voitures: <span id="carCountValue">50</span></label>
-                        <input type="range" id="carCount" value="50" min="20" max="150">
+                    <!-- Hidden track drawing buttons -->
+                    <div class="buttons" style="display:none;">
+                        <button id="drawTrackBtn">Draw Track</button>
+                        <button id="setStartBtn">Set Start</button>
                     </div>
-                    <div class="setting">
-                        <label>Mutation: <span id="mutationValue">15%</span></label>
-                        <input type="range" id="mutationRate" min="1" max="50" value="15">
+                    <div class="buttons" style="display:none;">
+                        <button id="clearDrawBtn">Clear Drawing</button>
                     </div>
                 </div>
 
+                <!-- Save -->
                 <div class="panel save-panel">
-                    <h3>Sauvegarde</h3>
+                    <h3>Save</h3>
                     <div class="buttons">
-                        <button id="saveBtn">Sauvegarder</button>
-                        <button id="loadBtn">Charger</button>
+                        <button id="saveBtn">Model</button>
+                        <button id="loadBtn">Load</button>
+                    </div>
+                    <!-- Hidden track save/load buttons -->
+                    <div class="buttons" style="display:none;">
+                        <button id="saveTrackBtn">Track</button>
+                        <button id="loadTrackBtn">Load</button>
                     </div>
                     <input type="file" id="loadFile" accept=".json" style="display:none">
+                    <input type="file" id="loadTrackFile" accept=".json" style="display:none">
                     <p id="saveStatus" class="save-status"></p>
                 </div>
+            </div>
 
-                <div class="panel info-panel">
-                    <h3>Raccourcis</h3>
-                    <p><kbd>ESPACE</kbd> Pause/Play</p>
-                    <p><kbd>S</kbd> Afficher capteurs</p>
-                    <p><kbd>+/-</kbd> Vitesse</p>
+            <!-- AI Configuration Panel -->
+            <div class="config-panel">
+                <h2>AI Configuration</h2>
+
+                <!-- Neural Network -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('nn-section')">
+                        <span>Neural Network</span>
+                        <span class="toggle-icon" id="nn-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="nn-section">
+                        <div class="setting">
+                            <label>Hidden layer: <span id="hiddenSizeValue">6</span> neurons</label>
+                            <input type="range" id="hiddenSize" value="6" min="6" max="32">
+                            <p class="setting-info">More neurons = more capacity but slower learning</p>
+                        </div>
+                        <div class="setting">
+                            <label>Sensors: <span id="sensorCountValue">3</span></label>
+                            <input type="range" id="sensorCount" value="3" min="3" max="12">
+                            <p class="setting-info">Number of wall detection rays</p>
+                        </div>
+                        <div class="setting">
+                            <label>Sensor range: <span id="sensorRangeValue">50</span>px</label>
+                            <input type="range" id="sensorRange" value="50" min="50" max="250">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Genetic Algorithm -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('ga-section')">
+                        <span>Genetic Algorithm</span>
+                        <span class="toggle-icon" id="ga-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="ga-section">
+                        <div class="setting">
+                            <label>Population: <span id="carCountValue">20</span> cars</label>
+                            <input type="range" id="carCount" value="20" min="20" max="200">
+                        </div>
+                        <div class="setting">
+                            <label>Base mutation: <span id="mutationValue">1</span>%</label>
+                            <input type="range" id="mutationRate" min="1" max="50" value="1">
+                        </div>
+                        <div class="setting">
+                            <label>Elitism: <span id="elitismValue">1</span> individuals</label>
+                            <input type="range" id="elitism" value="1" min="1" max="10">
+                            <p class="setting-info">Best individuals kept without modification</p>
+                        </div>
+                        <div class="setting">
+                            <label>Crossover rate: <span id="crossoverValue">0</span>%</label>
+                            <input type="range" id="crossoverRate" value="0" min="0" max="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adaptive Mutation -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('adaptive-section')">
+                        <span>Adaptive Mutation</span>
+                        <span class="toggle-icon" id="adaptive-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="adaptive-section">
+                        <div class="setting toggle-setting">
+                            <label>
+                                <input type="checkbox" id="adaptiveMutation">
+                                Enable adaptive mutation
+                            </label>
+                            <p class="setting-info">Automatically increases mutation on stagnation</p>
+                        </div>
+                        <div class="setting">
+                            <label>Stagnation threshold: <span id="stagnationThresholdValue">2</span> generations</label>
+                            <input type="range" id="stagnationThreshold" value="2" min="2" max="20">
+                        </div>
+                        <div class="setting">
+                            <label>Max mutation boost: <span id="mutationBoostValue">10</span>%</label>
+                            <input type="range" id="mutationBoost" value="10" min="10" max="50">
+                            <p class="setting-info">Maximum additional mutation during stagnation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Novelty Search -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('novelty-section')">
+                        <span>Novelty Search</span>
+                        <span class="toggle-icon" id="novelty-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="novelty-section">
+                        <div class="setting toggle-setting">
+                            <label>
+                                <input type="checkbox" id="noveltySearch">
+                                Enable Novelty Search
+                            </label>
+                            <p class="setting-info">Rewards exploration of new trajectories</p>
+                        </div>
+                        <div class="setting">
+                            <label>Novelty weight: <span id="noveltyWeightValue">0</span>%</label>
+                            <input type="range" id="noveltyWeight" value="0" min="0" max="100">
+                            <p class="setting-info">0% = pure fitness, 100% = pure novelty</p>
+                        </div>
+                        <div class="setting">
+                            <label>Archive size: <span id="archiveSizeValue">20</span></label>
+                            <input type="range" id="archiveSize" value="20" min="20" max="500">
+                        </div>
+                        <div class="setting">
+                            <label>K neighbors: <span id="kNeighborsValue">5</span></label>
+                            <input type="range" id="kNeighbors" value="5" min="5" max="30">
+                            <p class="setting-info">Number of neighbors to compute novelty</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fitness Sharing -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('sharing-section')">
+                        <span>Fitness Sharing</span>
+                        <span class="toggle-icon" id="sharing-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="sharing-section">
+                        <div class="setting toggle-setting">
+                            <label>
+                                <input type="checkbox" id="fitnessSharing">
+                                Enable Fitness Sharing
+                            </label>
+                            <p class="setting-info">Penalizes overly similar behaviors</p>
+                        </div>
+                        <div class="setting">
+                            <label>Niche radius (sigma): <span id="nicheSigmaValue">10</span></label>
+                            <input type="range" id="nicheSigma" value="10" min="10" max="200">
+                            <p class="setting-info">Distance below which individuals share fitness</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward Shaping -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('reward-section')">
+                        <span>Reward Shaping (Fitness)</span>
+                        <span class="toggle-icon" id="reward-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="reward-section">
+                        <div class="setting">
+                            <label>Checkpoint weight: <span id="checkpointWeightValue">100</span></label>
+                            <input type="range" id="checkpointWeight" value="100" min="100" max="5000" step="100">
+                        </div>
+                        <div class="setting">
+                            <label>Approach weight: <span id="approachWeightValue">0</span></label>
+                            <input type="range" id="approachWeight" value="0" min="0" max="2000" step="50">
+                            <p class="setting-info">Reward for approaching next checkpoint</p>
+                        </div>
+                        <div class="setting">
+                            <label>Speed weight: <span id="speedWeightValue">0</span></label>
+                            <input type="range" id="speedWeight" value="0" min="0" max="200" step="10">
+                        </div>
+                        <div class="setting">
+                            <label>Exploration weight: <span id="explorationWeightValue">0</span></label>
+                            <input type="range" id="explorationWeight" value="0" min="0" max="500" step="25">
+                            <p class="setting-info">Bonus for visiting unique areas</p>
+                        </div>
+                        <div class="setting">
+                            <label>Stuck penalty: <span id="stuckPenaltyValue">0</span></label>
+                            <input type="range" id="stuckPenalty" value="0" min="0" max="200" step="10">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physics -->
+                <div class="config-section">
+                    <div class="section-header" onclick="toggleSection('physics-section')">
+                        <span>Car Physics</span>
+                        <span class="toggle-icon" id="physics-section-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="physics-section">
+                        <div class="setting">
+                            <label>Max speed: <span id="maxSpeedValue">3</span></label>
+                            <input type="range" id="maxSpeed" value="3" min="3" max="12" step="0.5">
+                        </div>
+                        <div class="setting">
+                            <label>Acceleration: <span id="accelerationValue">0.10</span></label>
+                            <input type="range" id="acceleration" value="10" min="10" max="50">
+                        </div>
+                        <div class="setting">
+                            <label>Friction: <span id="frictionValue">1</span>%</label>
+                            <input type="range" id="friction" value="1" min="1" max="15">
+                        </div>
+                        <div class="setting">
+                            <label>Turn reduction (speed): <span id="turnReductionValue">0</span>%</label>
+                            <input type="range" id="turnReduction" value="0" min="0" max="80">
+                            <p class="setting-info">Turn capacity reduction at max speed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Apply Button -->
+                <div class="apply-section">
+                    <button id="applyConfigBtn" class="apply-btn">Apply changes</button>
+                    <button id="resetConfigBtn" class="reset-config-btn">Reset to defaults</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script src="neuralNetwork.js"></script>
     <script src="car.js"></script>
     <script src="track.js"></script>
     <script src="geneticAlgorithm.js"></script>
+    <script src="tracks.js"></script>
     <script src="game.js"></script>
+    <script>
+        // Toggle sections
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(sectionId + '-icon');
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                section.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+    </script>
 </body>
 </html>
